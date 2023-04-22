@@ -1,51 +1,16 @@
-name: Deploy to AWS EC2
-
+name: Basic deploy
 on:
   push:
     branches: [ main ]
 
 jobs:
-  deploy:
+  EC2-Deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - id: deploy
         uses: actions/checkout@v2
-
-      - name: Build Docker image
-        run: docker build -t myapp .
-
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
         with:
-          registry: <your-aws-account-number>.dkr.ecr.<region>.amazonaws.com
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Tag Docker image
-        run: docker tag myapp <your-aws-account-number>.dkr.ecr.<region>.amazonaws.com/myapp:latest
-
-      - name: Push Docker image
-        run: docker push <your-aws-account-number>.dkr.ecr.<region>.amazonaws.com/myapp:latest
-
-      - name: Sync Docker Compose file to EC2 instance
-        uses: jakejarvis/s3-sync-action@master
-        with:
-          args: --exclude '.git/*'
-          source_dir: .
-          dest: s3://my-bucket/
-          aws_s3_region: <region>
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: SSH into EC2 instance and deploy Docker Compose file
-        uses: appleboy/ssh-action@v0.17.2
-        with:
-          host: <your-ec2-instance-ip>
-          username: <your-ec2-instance-username>
-          password: ${{ secrets.EC2_INSTANCE_PASSWORD }}
-          script: |
-            cd /path/to/docker-compose.yml
-            sudo docker-compose down
-            sudo docker-compose pull
-            sudo docker-compose up -d
+          aws_default_region: ap-south-1
+          dot_env: ${{ secrets.DOT_ENV }}
